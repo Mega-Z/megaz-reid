@@ -83,6 +83,6 @@ TEST:
   FEAT_NORM: 'yes'
   USE_FEAT: 'dec'
 
-OUTPUT_DIR: './logs/occ_reid_vit_transreid'
+OUTPUT_DIR: '../../reid_logs/occ_reid_vit_transreid'
 
 

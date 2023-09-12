@@ -68,6 +68,12 @@ _C.MODEL.SIE_COE = 3.0
 _C.MODEL.SIE_CAMERA = False
 _C.MODEL.SIE_VIEW = False
 
+# MegaZ Augmentation
+_C.AUG.TYPES = [] # occlusion
+_C.AUG.SEG_CFG = "./COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml"
+_C.AUG.OCC_TYPES = [] # instance_mask, img_block, img_rect
+_C.AUG.OCC_TYPES.RATIO = [] # sum = 1
+
 # ZZW
 _C.MODEL.ZZWEXP = False
 _C.MODEL.TWO_BRANCHED = False

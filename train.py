@@ -1,5 +1,6 @@
 from utils.logger import setup_logger
 from datasets import make_dataloader
+from augmentation import make_aug
 from model import make_model
 from solver import make_optimizer
 from solver.scheduler_factory import create_scheduler
@@ -65,6 +66,8 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = cfg.MODEL.DEVICE_ID
     train_loader, train_loader_normal, val_loader, val_dataset, num_query, num_classes, camera_num, view_num = make_dataloader(cfg)
 
+    augment = make_aug(cfg, train_loader)
+
     model = make_model(cfg, num_class=num_classes, camera_num=camera_num, view_num = view_num)
 
     loss_func, center_criterion = make_loss(cfg, num_classes=num_classes)
@@ -79,6 +82,7 @@ if __name__ == '__main__':
         center_criterion,
         train_loader,
         val_loader,
+
         optimizer,
         optimizer_center,
         scheduler,
