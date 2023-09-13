@@ -501,7 +501,7 @@ class build_transformer_exp(nn.Module):  # ablation
 					x_input = x * x_mask + x_ori * ~x_mask
 				else:
 					x_input = x
-				features, _, attn_base = self.base(x_input, cam_label=cam_label, view_label=view_label,
+				features, occ_pred_occ, attn_base = self.base(x_input, cam_label=cam_label, view_label=view_label,
 				                                   mid_feature=mid_feature, occ_fix=False)  # [64, 129, 768]
 				features, ch_attn_occ = self.channel_attn(features)
 				score_occ, feat_occ, attn_occ = self.head_occ(features, head_suppress=head_suppress)
@@ -509,7 +509,10 @@ class build_transformer_exp(nn.Module):  # ablation
 			# occ aware
 
 			if self.occ_aware and not self.occ_aug:
-				occ_pred = torch.cat((occ_pred_occ, occ_pred_ori), dim=0)  # two branch occ predict
+				if self.two_branched:
+					occ_pred = torch.cat((occ_pred_occ, occ_pred_ori), dim=0)  # two branch occ predict
+				else:
+					occ_pred = occ_pred_occ
 			else:
 				occ_pred = None
 			# score_ori, feat_ori, occ_pred = None, None, None

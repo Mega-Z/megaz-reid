@@ -171,11 +171,16 @@ def make_loss(cfg, num_classes):    # modified by gu
                 # Occlude Aware loss
                 if occ_pred is not None and patch_mask is not None and cfg.MODEL.OCC_AWARE:
                     B = patch_mask.shape[0]
-                    occ_pred_occ = occ_pred[:B].reshape((-1, 2))
-                    occ_pred_ori = occ_pred[B:].reshape((-1, 2))
-                    occ_target_occ = patch_mask.long().reshape((-1))
-                    occ_target_ori = torch.zeros_like(occ_target_occ).reshape((-1))
-                    OCC_LOSS = F.cross_entropy(occ_pred_occ, occ_target_occ) + F.cross_entropy(occ_pred_ori, occ_target_ori) * 0.1
+                    if cfg.MODEL.TWO_BRANCHED:
+                        occ_pred_occ = occ_pred[:B].reshape((-1, 2))
+                        occ_pred_ori = occ_pred[B:].reshape((-1, 2))
+                        occ_target_occ = patch_mask.long().reshape((-1))
+                        occ_target_ori = torch.zeros_like(occ_target_occ).reshape((-1))
+                        OCC_LOSS = F.cross_entropy(occ_pred_occ, occ_target_occ) + F.cross_entropy(occ_pred_ori, occ_target_ori) * 0.1
+                    else:
+                        occ_pred_occ = occ_pred.reshape((-1, 2))
+                        occ_target_occ = patch_mask.long().reshape((-1))
+                        OCC_LOSS = F.cross_entropy(occ_pred_occ, occ_target_occ)
                 else:
                     OCC_LOSS = 0
 
