@@ -82,7 +82,7 @@ if __name__ == '__main__':
         center_criterion,
         train_loader,
         val_loader,
-
+        augment,
         optimizer,
         optimizer_center,
         scheduler,

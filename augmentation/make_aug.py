@@ -12,8 +12,8 @@ from PIL import Image
 class OccAugment():
 	def __init__(self, cfg, train_loader):
 		self.id_img_masks = {}
-		if OcclusionType.INSTANCE_MASK in cfg.AUG.OCC_TYPES:
-			seg_pred = DefaultPredictor(get_config(cfg.AUG.SEG_CFG, trained=True))
+		if OcclusionType.INSTANCE_MASK in cfg.INPUT.OCC_TYPES:
+			seg_pred = DefaultPredictor(get_config(cfg.INPUT.SEG_CFG, trained=True))
 			self.id_img_masks = self.init_masks(seg_pred, train_loader)
 			self.mask_transforms = T.Compose([
 				T.Resize(cfg.INPUT.SIZE_TRAIN),
@@ -74,8 +74,8 @@ class OccAugment():
 	def do_augment(self, imgs, vids, cfg):
 		out = imgs.clone()
 		patch_mask = torch.zeros((imgs.shape[0], imgs.shape[2] * imgs.shape[3] // 16 // 16))
-		occ_types = cfg.MODEL.OCC_TYPES
-		occ_ratios = cfg.MODEL.OCC_TYPES_RATIO
+		occ_types = cfg.INPUT.OCC_TYPES
+		occ_ratios = cfg.INPUT.OCC_TYPES_RATIO
 		assert len(occ_types) == len(occ_ratios)
 		for idx in range(imgs.shape[0]):
 			occ_type_rand = torch.rand(size=(1,))[0]

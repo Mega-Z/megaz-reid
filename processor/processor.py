@@ -6,14 +6,14 @@ import cv2
 import os
 import torchvision.transforms as T
 import torch.nn as nn
-from PIL import Image
 from utils.meter import AverageMeter
 from utils.metrics import R1_mAP_eval
 from torch.cuda import amp
-from timm.data.random_erasing import RandomErasing
 import torch.distributed as dist
 from log_handler.json_logger import JsonLogger
+from log_handler import log_config
 from dataset_stat import DataStat
+from augmentation.augmentation_types import AugmentationType
 
 
 def patchify(imgs):
@@ -104,74 +104,6 @@ def unpatchify_mask(m, H, W):
 	m = torch.einsum('nhwpqc->nchpwq', m)
 	mask = m.reshape(shape=(m.shape[0], 3, H, W))
 	return mask
-
-
-'''
-def gen_occ(img, vid, cfg, patch_align=False, id_img_masks=None):
-    out = img.clone()
-    patch_mask = torch.zeros((img.shape[0], img.shape[2]*img.shape[3]//16//16))
-    for idx in range(img.shape[0]):
-        # choose an image from different id to occlude im
-        idx_occ = torch.randint(low=0, high=vid.shape[0] - 1, size=(1,))[0]
-        while vid[idx] == vid[idx_occ]:
-            idx_occ = torch.randint(low=0, high=vid.shape[0] - 1, size=(1,))[0]
-        if patch_align:
-            if cfg.MODEL.OCC_TYPE == "img_block":
-                # mask1, mask2, patch_mask[idx] = blockwise_mask_patch_align(img.shape[3], img.shape[2], masking_ratio=cfg.MODEL.OCC_RATIO, align_bottom=cfg.MODEL.OCC_ALIGN_BTM)
-                mask1, mask2, patch_mask[idx] = blockwise_mask_patch_align_udlr(img.shape[3], img.shape[2], masking_ratio=cfg.MODEL.OCC_RATIO, ulrd=cfg.MODEL.OCC_ULRD, margin=cfg.MODEL.OCC_MARGIN, align_bound=cfg.MODEL.OCC_ALIGN_BOUND)
-            elif cfg.MODEL.OCC_TYPE == "img_rect":
-                mask1, mask2, patch_mask[idx] = rect_mask_patch_align(img.shape[3], img.shape[2], align_bottom=cfg.MODEL.OCC_ALIGN_BTM)
-        else:
-            mask1, mask2 = blockwise_mask(img.shape[3], img.shape[2], masking_ratio=cfg.MODEL.OCC_RATIO)
-        out[idx, :, mask1] = img[idx_occ, :, mask2]
-    if patch_align:
-        return out, patch_mask == 1
-    else:
-        return out
-
-
-def gen_instance_occ(img, vid, img_id_masks, cfg):
-    out = img.clone()
-    h = img.shape[2]
-    w = img.shape[3]
-    patch_mask = torch.zeros((img.shape[0], h*w//16//16))
-    transforms = T.Compose([
-        T.Resize(cfg.INPUT.SIZE_TRAIN),
-        T.ToTensor(),
-        T.Normalize(mean=cfg.INPUT.PIXEL_MEAN, std=cfg.INPUT.PIXEL_STD)
-    ])
-    mask_resize = T.Resize((h//16,w//16))
-    for idx in range(img.shape[0]):
-        if torch.rand(size=(1,))[0] > np.average(cfg.MODEL.OCC_RATIO):
-            continue
-        # select a mask from different id
-        other_ids = [k for k in img_id_masks.keys() if k!=vid[idx]]
-        if len(other_ids) == 0:
-            continue
-        other_id = np.random.choice(other_ids)
-        mask_dict = np.random.choice(img_id_masks[other_id])
-        instance_img = Image.open(mask_dict["path"]).convert('RGB')
-        instance_img = transforms(instance_img).to("cuda")
-        instance_mask = mask_dict["mask"]
-        img_mask = torch.zeros_like(instance_mask)
-        # random x&y shift
-        dx = torch.randint(low=0, high=w, size=(1,))[0] - int(w/2)
-        dy = torch.randint(low=int(h/4), high=int(h/4*3), size=(1,))[0]
-        ori_x1 = max(0, dx)
-        ori_x2 = min(w, w+dx)
-        ori_y1 = max(0, dy)
-        ori_y2 = min(h, h+dy)
-        msk_x1 = max(0, -1*dx)
-        msk_x2 = min(w, w-dx)
-        msk_y1 = max(0, -1*dy)
-        msk_y2 = min(h, h-dy)
-        m = img_mask[ori_y1:ori_y2, ori_x1:ori_x2] = instance_mask[msk_y1:msk_y2, msk_x1:msk_x2]
-        out[idx, :, ori_y1:ori_y2, ori_x1:ori_x2][:, m] = instance_img[:, msk_y1:msk_y2, msk_x1:msk_x2][:, m]
-        img_mask = mask_resize(torch.unsqueeze(img_mask,0))
-        patch_mask[idx] = torch.reshape(img_mask, patch_mask[idx].shape)
-
-    return out, patch_mask
-'''
 
 
 def shift(img, max_shift_ratio=0.33):
@@ -405,13 +337,13 @@ def do_train(cfg,
 
 	device = "cuda"
 	epochs = cfg.SOLVER.MAX_EPOCHS
-	log_json = False
+	# log_json = False
 	hook_attn_from_model = False
 	iter_save_log = 1
 	H = 12
 
 	logger = logging.getLogger("transreid.train")
-	if log_json and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0):
+	if log_config.ENABLE and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0):
 		json_logger = JsonLogger(cfg=cfg)
 		logger.info('start training')
 		max_rank1 = 0
@@ -494,7 +426,7 @@ def do_train(cfg,
 			if hook_attn_from_model:
 				attns_hook = []
 			img = img.to(device)
-			if len(cfg.MODEL.OCC_TYPES) != 0:
+			if len(cfg.INPUT.AUG_TYPES) != 0:
 				img_occ, patch_mask = augment.do_augment(img, vid, cfg)
 				patch_mask = patch_mask.to(device)
 			else:
@@ -536,10 +468,6 @@ def do_train(cfg,
 					loss, l_id, l_tri = loss_fn(score, feat, target, target_cam)  # target_cam is not used
 
 			scaler.scale(loss).backward()
-			'''
-			for idx, para in enumerate(model.named_parameters()):
-				if para[1].grad == None and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0):
-					print(para[0])'''
 			scaler.step(optimizer)
 			scaler.update()
 
@@ -572,13 +500,14 @@ def do_train(cfg,
 
 			# save images
 
-			if log_json and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0) and n_iter < iter_save_log:
+			if log_config.ENABLE and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0) and n_iter < iter_save_log:
 				if cfg.MODEL.ZZWEXP:
 					if epoch == 1 and n_iter == 0:
 						json_logger.save_images(img, 1, '-o')
-						json_logger.save_images(img_occ, 1, '-m')
-						occ_label = visualize_occ_label(patch_mask)
-						json_logger.save_images(occ_label, 1, '-gt')
+						if AugmentationType.OCCLUSION in cfg.INPUT.AUG_TYPES:
+							json_logger.save_images(img_occ, 1, '-m')
+							occ_label = visualize_occ_label(patch_mask)
+							json_logger.save_images(occ_label, 1, '-gt')
 					elif epoch % 10 == 0:
 						json_logger.save_images(img, epoch, '-o', id_plus=img.shape[0] * n_iter)
 						json_logger.save_images(img_occ, epoch, '-m', id_plus=img_occ.shape[0] * n_iter)
@@ -612,7 +541,7 @@ def do_train(cfg,
 
 		# append epoch state to json logger
 
-		if log_json and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0):
+		if log_config.ENABLE and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0):
 			json_logger.append_state({"Epoch": epoch,
 			                          "Accuracy": float(acc_meter.avg),
 			                          "Learning Rate": scheduler._get_lr(epoch)[0],
@@ -665,7 +594,7 @@ def do_train(cfg,
 							                    occ_token=cfg.MODEL.OCC_AWARE)
 						evaluator.update((feat, vid, camid))
 						# save images
-						if log_json and n_iter < iter_save_log:
+						if log_config.ENABLE and n_iter < iter_save_log:
 							json_logger.save_images(img, epoch, '-o', prefix='query', id_plus=img.shape[0] * n_iter)
 							if hook_attn_from_model:
 								json_logger.visualize_attn(img, attns_map, epoch, '-o', prefix='query',
@@ -723,7 +652,7 @@ def do_train(cfg,
 				for r in [1, 5, 10]:
 					logger.info("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
 				torch.cuda.empty_cache()'''
-			if log_json and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0):
+			if log_config.ENABLE and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0):
 				max_rank1 = max(max_rank1, float(cmc[0]))
 				if epoch == epochs:  # last epoch
 					json_logger.append_state({"MAX_Rank-1": max_rank1})
@@ -737,10 +666,10 @@ def do_inference(cfg,
                  val_dataset,
                  num_query):
 	device = "cuda"
-	log_json = False
+	# log_json = False
 	attn_hook = False
 	logger = logging.getLogger("transreid.train")
-	if log_json and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0):
+	if log_config.ENABLE and (not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0):
 		json_logger = JsonLogger(cfg=cfg)
 	logger.info("Enter inferencing")
 	evaluator = R1_mAP_eval(num_query, max_rank=50, feat_norm=cfg.TEST.FEAT_NORM)
@@ -775,7 +704,7 @@ def do_inference(cfg,
 			target_view = target_view.to(device)
 			feat, occ_pred = model(img, cam_label=camids, view_label=target_view)
 			evaluator.update((feat, pid, camid))
-			if log_json and n_iter == 0:
+			if log_config.ENABLE and n_iter == 0:
 				json_logger.save_images(img, 0, '-o', prefix='query')
 				if attn_hook:
 					attn_mask = rollout(attns[:12], discard_ratio=0.5, head_fusion='mean')
@@ -802,7 +731,7 @@ def do_inference(cfg,
 		ds.summarize(idx5, img_path_list)
 
 	assert idx5.shape[0] == num_query, "test error"
-	if log_json:
+	if log_config.ENABLE:
 		json_logger.append_state({"Rank-1": float(cmc[0]), "Rank-5": float(cmc[4]), "Rank-10": float(cmc[9]), \
 		                          "mAP": float(mAP)}, dump=True, new_epoch=True)
 		json_logger.visualize_matches(idx5, val_dataset, img_path_list)

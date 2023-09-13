@@ -68,19 +68,13 @@ _C.MODEL.SIE_COE = 3.0
 _C.MODEL.SIE_CAMERA = False
 _C.MODEL.SIE_VIEW = False
 
-# MegaZ Augmentation
-_C.AUG.TYPES = [] # occlusion
-_C.AUG.SEG_CFG = "./COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml"
-_C.AUG.OCC_TYPES = [] # instance_mask, img_block, img_rect
-_C.AUG.OCC_TYPES.RATIO = [] # sum = 1
+
 
 # ZZW
 _C.MODEL.ZZWEXP = False
 _C.MODEL.TWO_BRANCHED = False
 
 # Occlusion Augmentation
-_C.MODEL.OCC_TYPES = [] # instance_mask, img_block, img_rect
-_C.MODEL.OCC_TYPES_RATIO = []
 _C.MODEL.OCC_AUG = False
 # for img block
 _C.MODEL.OCC_RATIO = [0.2]
@@ -128,6 +122,11 @@ _C.INPUT.PIXEL_MEAN = [0.485, 0.456, 0.406]
 _C.INPUT.PIXEL_STD = [0.229, 0.224, 0.225]
 # Value of padding size
 _C.INPUT.PADDING = 10
+# MegaZ Augmentation
+_C.INPUT.AUG_TYPES = [] # occlusion
+_C.INPUT.SEG_CFG = "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml"
+_C.INPUT.OCC_TYPES = [] # instance_mask, img_block, img_rect
+_C.INPUT.OCC_TYPES_RATIO = []
 
 # -----------------------------------------------------------------------------
 # Dataset

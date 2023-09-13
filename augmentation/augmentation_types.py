@@ -2,11 +2,11 @@
 from enum import Enum
 
 
-class AugmentationType(Enum):
-	OCCLUSION = "occlusion"
+class AugmentationType:
+	OCCLUSION = 'occlusion'
 
 
-class OcclusionType(Enum):
-	INSTANCE_MASK = "instance_mask"
-	IMG_BLOCK = "img_block"
-	IMG_RECT = "img_rect"
+class OcclusionType:
+	INSTANCE_MASK = 'instance_mask'
+	IMG_BLOCK = 'img_block'
+	IMG_RECT = 'img_rect'

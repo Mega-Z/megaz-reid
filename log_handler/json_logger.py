@@ -78,8 +78,8 @@ class JsonLogger:
 			self.dump_log()
 
 	def save_images(self, imgs, epoch, suffix, prefix='img', id_plus=0):
-		if not os.path.exists(os.path.join(self.log_dir, self.run_name, "../imgs")):
-			os.mkdir(os.path.join(self.log_dir, self.run_name, "../imgs"))
+		if not os.path.exists(os.path.join(self.log_dir, self.run_name, "imgs")):
+			os.mkdir(os.path.join(self.log_dir, self.run_name, "imgs"))
 		if not os.path.exists(os.path.join(self.log_dir, self.run_name, 'imgs/epoch_{:0>3d}/'.format(epoch))):
 			os.mkdir(os.path.join(self.log_dir, self.run_name, 'imgs/epoch_{:0>3d}/'.format(epoch)))
 		for i, img in enumerate(imgs):
