@@ -599,7 +599,7 @@ def do_train(cfg,
 							if hook_attn_from_model:
 								json_logger.visualize_attn(img, attns_map, epoch, '-o', prefix='query',
 								                           id_plus=img.shape[0] * n_iter)
-							if (cfg.MODEL.ZZWTRY or cfg.MODEL.ZZWEXP) and cfg.MODEL.OCC_AWARE:
+							if cfg.MODEL.ZZWEXP and cfg.MODEL.OCC_AWARE:
 								occ_map = visualize_occ_pred(occ_pred)
 								json_logger.save_images(occ_map, epoch, '-occ', prefix='query',
 								                        id_plus=img.shape[0] * n_iter)

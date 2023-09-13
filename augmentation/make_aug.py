@@ -28,7 +28,7 @@ class OccAugment():
 		for n_iter, (_, pids, _, _, img_paths) in enumerate(train_loader):
 			if (n_iter + 1) % 10 == 0:
 				print("preparing person masks: ", n_iter + 1, "/", len(train_loader))
-			# break # for debug
+				# break # for debug
 			for i in range(len(img_paths)):
 				cv_img = cv2.imread(img_paths[i])
 				inputs = cv2.resize(cv_img, (128, 256))
