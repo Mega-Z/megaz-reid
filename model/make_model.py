@@ -463,7 +463,7 @@ class build_transformer_exp(nn.Module):  # ablation
 		                                                occ_block_depth=cfg.MODEL.EXTRA_OCC_BLOCKS,
 		                                                fix_alpha=cfg.MODEL.FIX_ALPHA)
 
-		self.channel_attn = SeModule(embed_dim)
+		# self.channel_attn = SeModule(embed_dim)
 		if pretrain_choice == 'imagenet':
 			self.base.load_param(model_path)
 			print('Loading pretrained ImageNet model......from {}'.format(model_path))
@@ -485,11 +485,13 @@ class build_transformer_exp(nn.Module):  # ablation
 			if self.two_branched:
 				features, occ_pred_occ, _ = self.base(x, cam_label=cam_label, view_label=view_label,
 				                                      mid_feature=mid_feature, occ_fix=self.occ_aware)  # [64, 129, 768]
-				features, ch_attn_occ = self.channel_attn(features)
+				# features, ch_attn_occ = self.channel_attn(features)
 				score_occ, feat_occ, attn_occ = self.head_occ(features)
 				features_ori, occ_pred_ori, _ = self.base(x_ori, cam_label=cam_label, view_label=view_label,
 				                                          mid_feature=mid_feature, occ_fix=False)  # [64, 129, 768]
-				features, ch_attn_ori = self.channel_attn(features_ori)
+				# features, ch_attn_ori = self.channel_attn(features_ori)
+				ch_attn_occ = None
+				ch_attn_ori = None
 				if self.inference:
 					score_ori, feat_ori, attn_ori = self.head_ori(features_ori)
 				else:
@@ -503,8 +505,9 @@ class build_transformer_exp(nn.Module):  # ablation
 					x_input = x
 				features, occ_pred_occ, attn_base = self.base(x_input, cam_label=cam_label, view_label=view_label,
 				                                   mid_feature=mid_feature, occ_fix=False)  # [64, 129, 768]
-				features, ch_attn_occ = self.channel_attn(features)
+				# features, ch_attn_occ = self.channel_attn(features)
 				score_occ, feat_occ, attn_occ = self.head_occ(features, head_suppress=head_suppress)
+				ch_attn_occ = None
 				score_ori, feat_ori, attn_ori, ch_attn_ori = None, None, None, None
 			# occ aware
 
@@ -523,7 +526,7 @@ class build_transformer_exp(nn.Module):  # ablation
 		else:
 			features, occ_pred, attn = self.base(x, cam_label=cam_label, view_label=view_label, mid_feature=mid_feature,
 			                                     occ_fix=False)  # [64, 129, 768]
-			features, _ = self.channel_attn(features)
+			# features, _ = self.channel_attn(features)
 			feat, _ = self.head_occ(features)
 			return feat, occ_pred, attn
 

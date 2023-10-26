@@ -17,7 +17,7 @@ MODEL:
 
   ZZWEXP: True
   DIST_TRAIN: True
-  TWO_BRANCHED: False
+  TWO_BRANCHED: True
 
   OCC_AUG: False
   OCC_RATIO: [0.25, 0.35]
@@ -26,21 +26,21 @@ MODEL:
   OCC_ALIGN_BOUND: False
   OCC_ALIGN_BTM: False
 
-  OCC_AWARE: True
+  OCC_AWARE: False
   OCC_LOSS_WEIGHT: 1.0
   EXTRA_OCC_BLOCKS: 3
   FIX_ALPHA: 0.
 
-  IFRC: False
+  IFRC: True
   BRANCH_BLOCKS: 0
   IFRC_LOSS_TYPE: 'l2dist'
   IFRC_LOSS_WEIGHT: 0.01
   # USE_DECODER_FEAT: 'glb_n_loc'
 
-  HEAD_ENHANCE: False
+  HEAD_ENHANCE: True
   HEAD_DIV_LOSS_WEIGHT: 0.1
 
-  HEAD_SUP: False
+  HEAD_SUP: True
 
   SAMPLE_HEAD_SUP: False
 
