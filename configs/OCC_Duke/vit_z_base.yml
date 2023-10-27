@@ -33,6 +33,7 @@ MODEL:
 
   IFRC: True
   BRANCH_BLOCKS: 0
+  IFRC_TARGET: 'feat'
   IFRC_LOSS_TYPE: 'l2dist'
   IFRC_LOSS_WEIGHT: 0.01
   # USE_DECODER_FEAT: 'glb_n_loc'

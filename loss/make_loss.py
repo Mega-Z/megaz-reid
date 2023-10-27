@@ -12,16 +12,16 @@ from .center_loss import CenterLoss
 
 def embed_ifrc_loss(feat_ori, feat_inf, cfg, patch_mask=None):  # by zzw
     # patchembed_ori is detached from graph
-    if cfg.MODEL.PRETEXT == "feat":
+    if cfg.MODEL.IFRC_TARGET == "feat":
         x_ori = feat_ori
         x_inf = feat_inf
-    elif cfg.MODEL.PRETEXT == 'cls_token':
+    elif cfg.MODEL.IFRC_TARGET == 'cls_token':
         x_ori = feat_ori[:, 0]
         x_inf = feat_inf[:, 0]
-    elif cfg.MODEL.PRETEXT == "embed":
+    elif cfg.MODEL.IFRC_TARGET == "embed":
         x_ori = feat_ori[:, 1:]
         x_inf = feat_inf[:, 1:]
-    elif cfg.MODEL.PRETEXT == "masked_embed":
+    elif cfg.MODEL.IFRC_TARGET == "masked_embed":
         x_ori = feat_ori[:, 1:][patch_mask]
         x_inf = feat_inf[:, 1:][patch_mask]
 
@@ -151,20 +151,12 @@ def make_loss(cfg, num_classes):    # modified by gu
 
                 # Inference loss
                 if cfg.MODEL.IFRC:
-                    if cfg.MODEL.PRETEXT == 'rgb' or cfg.MODEL.PRETEXT == 'rgb_avg':
-                        IFRC_LOSS = rgb_ifrc_loss(pretext_tgt, pretext_pred, patch_mask)
-                    elif cfg.MODEL.PRETEXT == 'embed' or cfg.MODEL.PRETEXT == 'masked_embed' or cfg.MODEL.PRETEXT == 'cls_token':
-                        if cfg.MODEL.OCCDECODER:
-                            IFRC_LOSS = embed_ifrc_loss(patchembeds["ori"], patchembeds["dec"], cfg, patch_mask)
-                        else:
-                            IFRC_LOSS = embed_ifrc_loss(patchembeds["ori"], patchembeds["occ"], cfg, patch_mask)
-                    elif cfg.MODEL.PRETEXT == 'feat':
-                        if cfg.MODEL.OCCDECODER:
-                            IFRC_LOSS = embed_ifrc_loss(feats["ori"][0], feats["dec"][0], cfg, patch_mask)
-                        else:
-                            IFRC_LOSS = embed_ifrc_loss(feats["ori"][0], feats["occ"][0], cfg, patch_mask)
+                    if cfg.MODEL.IFRC_TARGET == 'embed' or cfg.MODEL.IFRC_TARGET == 'masked_embed' or cfg.MODEL.IFRC_TARGET == 'cls_token':
+                        IFRC_LOSS = embed_ifrc_loss(patchembeds["ori"], patchembeds["occ"], cfg, patch_mask)
+                    elif cfg.MODEL.IFRC_TARGET == 'feat':
+                        IFRC_LOSS = embed_ifrc_loss(feats["ori"][0], feats["occ"][0], cfg, patch_mask)
                     else:
-                        raise NotImplementedError("pretext type: {} is not implemented".format(cfg.MODEL.PRETEXT))
+                        raise NotImplementedError("pretext type: {} is not implemented".format(cfg.MODEL.IFRC_TARGET))
                 else:
                     IFRC_LOSS = 0
 
