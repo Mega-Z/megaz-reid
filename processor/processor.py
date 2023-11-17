@@ -575,7 +575,7 @@ def do_train(cfg,
 				           os.path.join(cfg.OUTPUT_DIR, cfg.MODEL.NAME + '_{}.pth'.format(epoch)))
 
 		# evaluation
-
+		# if epoch == 1: # for debug
 		if epoch % eval_period == 0:
 			if not cfg.MODEL.DIST_TRAIN or dist.get_rank() == 0:
 				model.eval()

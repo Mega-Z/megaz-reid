@@ -13,8 +13,8 @@ from .center_loss import CenterLoss
 def embed_ifrc_loss(feat_ori, feat_inf, cfg, patch_mask=None):  # by zzw
     # patchembed_ori is detached from graph
     if cfg.MODEL.IFRC_TARGET == "feat":
-        x_ori = feat_ori
-        x_inf = feat_inf
+        x_ori = feat_ori[:, :cfg.MODEL.IFRC_HEAD_NUM*64]
+        x_inf = feat_inf[:, :cfg.MODEL.IFRC_HEAD_NUM*64]
     elif cfg.MODEL.IFRC_TARGET == 'cls_token':
         x_ori = feat_ori[:, 0]
         x_inf = feat_inf[:, 0]
@@ -150,7 +150,7 @@ def make_loss(cfg, num_classes):    # modified by gu
                         TRI_LOSS = triplet(feats["occ"], target)[0]
 
                 # Inference loss
-                if cfg.MODEL.IFRC:
+                if cfg.MODEL.TWO_BRANCHED and cfg.MODEL.IFRC:
                     if cfg.MODEL.IFRC_TARGET == 'embed' or cfg.MODEL.IFRC_TARGET == 'masked_embed' or cfg.MODEL.IFRC_TARGET == 'cls_token':
                         IFRC_LOSS = embed_ifrc_loss(patchembeds["ori"], patchembeds["occ"], cfg, patch_mask)
                     elif cfg.MODEL.IFRC_TARGET == 'feat':

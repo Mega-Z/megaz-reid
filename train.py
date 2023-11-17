@@ -89,3 +89,6 @@ if __name__ == '__main__':
         loss_func,
         num_query, args.local_rank
     )
+
+
+# CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4 --master_port 7777 train.py --config_file configs/OCC_Duke/vit_z_base.yml

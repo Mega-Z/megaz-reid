@@ -154,7 +154,7 @@ class Attention(nn.Module):
         self.dp = nn.Parameter(torch.ones((self.num_heads, self.num_patches)))
 
     def forward(self, x, attn_weight=None, alpha=0.1):
-        B, N, C = x.shape
+        B, N, C = x.shape # 64, 129, 768
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)
 

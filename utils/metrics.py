@@ -55,7 +55,33 @@ def weighted_euclidean_distance(qf, gf, occ_score):
         dist_mat = dist_mat + dist_mats[i+1]
     return dist_mats[4]
 
+def head_weighted_euclidean_distance(qf, gf):
+    """
 
+    Args:
+        qf: [num_query, dim*5]
+        gf: [num_gallery, dim*5]
+
+    Returns:
+        dist_mat: [num_query, num_gallery]
+    """
+    head_num = 12
+    part_head_num = 6
+    num_query = qf.shape[0]
+    num_gallery = gf.shape[0]
+    qfs = qf.reshape(num_query, 5, head_num, -1).permute(2, 0, 1, 3).reshape(head_num, num_query, -1)
+    gfs = gf.reshape(num_gallery, 5, head_num, -1).permute(2, 0, 1, 3).reshape(head_num, num_gallery, -1)
+    dist_mats = [euclidean_distance_(qfs[i], gfs[i]) for i in range(head_num)]
+
+    part_head_coff = 1.2
+
+    dist_mat = torch.zeros_like(dist_mats[0])
+    for i in range(head_num):
+        if i < part_head_num:
+            dist_mat = dist_mat + dist_mats[i]*part_head_coff
+        else:
+            dist_mat = dist_mat + dist_mats[i]
+    return dist_mat
 
 def cosine_similarity(qf, gf):
     epsilon = 0.00001
@@ -173,7 +199,8 @@ class R1_mAP_eval():
 
         else:
             print('=> Computing DistMat with euclidean_distance')
-            distmat = euclidean_distance(qf, gf)
+            # distmat = euclidean_distance(qf, gf)
+            distmat = head_weighted_euclidean_distance(qf, gf)
             # print('=> Computing DistMat with weighted_euclidean_distance')
         cmc, mAP, idx5 = eval_func(distmat, q_pids, g_pids, q_camids, g_camids)
 
